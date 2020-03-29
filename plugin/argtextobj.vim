@@ -13,8 +13,8 @@
 " Description:
 "   This plugin installes a text-object like motion 'a' (argument). You can
 "   d(elete), c(hange), v(select)... an argument or inner argument in familiar
-"   ways, such as 'daa'(delete-an-argument), 'cia'(change-inner-argument)
-"   or 'via'(select-inner-argument).
+"   ways, such as 'daa'(delete-an-argument), 'cka'(change-inner-argument)
+"   or 'vka'(select-inner-argument).
 "
 "   What this script do is more than just typing
 "     F,dt,
@@ -27,7 +27,7 @@
 "-----------------------------------------------------------------------------
 " Installation:
 "   Place this file in /usr/share/vim/vim*/plugin or ~/.vim/plugin/
-"   Now text-object like argument motion 'ia' and 'aa' is enabled by default.
+"   Now text-object like argument motion 'ka' and 'aa' is enabled by default.
 "
 "-----------------------------------------------------------------------------
 " Options:
@@ -49,13 +49,13 @@
 "
 " case 2: delete inner argument
 "     function(int arg1,    char* arg2="a,b,c(d,e)")
-"                              [N]  cia
+"                              [N]  cka
 "     function(int arg1,    )
 "                          [I]
 "
 " case 3: smart argument recognition (g:argumentobject_force_toplevel = 0)
 "     function(1, (20*30)+40, somefunc2(3, 4))
-"                   [N]  cia
+"                   [N]  cka
 "     function(1, , somefunc2(3, 4))
 "                [I]
 "     function(1, (20*30)+40, somefunc2(3, 4))
@@ -65,7 +65,7 @@
 "
 " case 4: smart argument recognition (g:argumentobject_force_toplevel = 1)
 "     function(1, (20*30)+40, somefunc2(3, 4))
-"                   [N]  cia
+"                   [N]  cka
 "     function(1, , somefunc2(3, 4))
 "                [I]
 "     function(1, (20*30)+40, somefunc2(3, 4))
@@ -111,12 +111,12 @@ function! s:GetOutOfDoubleQuote()
   endif
 
   while 1
-    exe 'silent! normal ^va"'
-    normal :\<ESC>\<CR>
+    exe 'silent! normal! ^va"'
+    normal! :\<ESC>\<CR>
     if getpos("'<")==getpos("'>")
       break
     endif
-    exe 'normal gvr' . repl
+    exe 'normal! gvr' . repl
   endwhile
 
   call setpos('.', pos_save)
@@ -124,9 +124,9 @@ function! s:GetOutOfDoubleQuote()
     " in double quote
     call setline('.', line)
     if getpos('.')==getpos("'<")
-      normal h
+      normal! h
     else
-      normal F"
+      normal! F"
   endif
   else
     " not in double quote
@@ -137,7 +137,7 @@ endfunction
 function! s:GetOuterFunctionParenthesis()
   let pos_save = getpos('.')
   let rightup_before = pos_save
-  silent! normal [(
+  silent! normal! [(
   let rightup_p = getpos('.')
   while rightup_p != rightup_before
     if ! g:argumentobject_force_toplevel && getline('.')[getpos('.')[2]-1-1] =~ '[a-zA-Z0-9_]'
@@ -145,7 +145,7 @@ function! s:GetOuterFunctionParenthesis()
       break
     endif
     let rightup_before = rightup_p
-    silent! normal [(
+    silent! normal! [(
     let rightup_p = getpos('.')
   endwhile
   call setpos('.', pos_save)
@@ -155,7 +155,7 @@ endfunction
 function! s:GetPair(pos)
   let pos_save = getpos('.')
   call setpos('.', a:pos)
-  normal %h
+  normal! %h
   let pair_pos = getpos('.')
   call setpos('.', pos_save)
   return pair_pos
@@ -165,9 +165,9 @@ function! s:GetInnerText(r1, r2)
   let pos_save = getpos('.')
   let reg_save = @@
   call setpos('.', a:r1)
-  normal lv
+  normal! lv
   call setpos('.', a:r2)
-  normal y
+  normal! y
   let val = @@
   call setpos('.', pos_save)
   let @@ = reg_save
@@ -192,7 +192,7 @@ function! s:MoveToNextNonSpace()
   let moved = 0
   """echo 'move:' . getline('.')[getpos('.')[2]-1]
   while getline('.')[getpos('.')[2]-1]==' '
-    normal l
+    normal! l
     if oldp == getpos('.')
       break
     endif
@@ -204,20 +204,20 @@ endfunction
 
 function! s:MoveLeft(num)
   if a:num>0
-    exe 'normal ' . a:num . 'h'
+    exe 'normal! ' . a:num . 'h'
   endif
 endfunction
 
 function! s:MoveRight(num)
   if a:num>0
-    exe 'normal ' . a:num . 'l'
+    exe 'normal! ' . a:num . 'l'
   endif
 endfunction
 
 function! s:MotionArgument(inner, visual)
   let current_c = getline('.')[getpos('.')[2]-1]
   if current_c==',' || current_c=='('
-    normal l
+    normal! l
   endif
 
   " get out of "double quoted string" because [( does not take effect in it
@@ -286,16 +286,16 @@ function! s:MotionArgument(inner, visual)
 
   call <SID>MoveRight(right)
   if delete_trailing_space
-    exe 'normal l'
+    exe 'normal! l'
     call <SID>MoveToNextNonSpace()
-    exe 'normal h'
+    exe 'normal! h'
   endif
 endfunction
 
 " maping definition
-vnoremap <silent> ia <ESC>:call <SID>MotionArgument(1, 1)<CR>
+vnoremap <silent> ka <ESC>:call <SID>MotionArgument(1, 1)<CR>
 vnoremap <silent> aa <ESC>:call <SID>MotionArgument(0, 1)<CR>
-onoremap <silent> ia :call <SID>MotionArgument(1, 0)<CR>
+onoremap <silent> ka :call <SID>MotionArgument(1, 0)<CR>
 onoremap <silent> aa :call <SID>MotionArgument(0, 0)<CR>
 
 " option. turn 1 to search the most toplevel function
